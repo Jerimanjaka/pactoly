@@ -47,7 +47,7 @@ export default function FacturesList() {
       montant_ht: facture.montant_ht,
       tva: facture.tva,
       total_ttc: facture.total_ttc,
-      lien: `http://localhost:5173/client/facture/${facture.uuid_public}`,
+      lien: `https://pactoly.vercel.app/client/facture/${facture.uuid_public}`,
     };
 
     emailjs

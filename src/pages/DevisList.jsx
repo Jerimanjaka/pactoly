@@ -75,7 +75,7 @@ export default function DevisList() {
       montant_ht: devis.montant_ht,
       tva: devis.tva,
       total_ttc: devis.total_ttc,
-      lien: `http://localhost:5173/client/${devis.lien_client}`,
+      lien: `https://pactoly.vercel.app/client/${devis.lien_client}`,
     };
 
     console.log(templateParams);
