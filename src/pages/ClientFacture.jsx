@@ -18,7 +18,9 @@ export default function ClientFacture() {
         .from("factures")
         .select("*")
         .eq("uuid_public", uuid)
-        .single();
+        //.single();
+
+        console.log("DATA / "+data)
 
       if (error) {
         console.error(error);
