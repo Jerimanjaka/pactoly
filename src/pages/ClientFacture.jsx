@@ -20,7 +20,7 @@ export default function ClientFacture() {
         .eq("uuid_public", uuid)
         //.single();
 
-        console.log("DATA / "+data)
+        alert("DATA : "+data)
 
       if (error) {
         console.error(error);
