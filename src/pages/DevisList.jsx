@@ -166,7 +166,6 @@ export default function DevisList() {
 
                 <Link
                   to={`/client/${d.lien_client}`}
-                  target="_blank"
                   className="bg-gray-600 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-full transition"
                 >
                   Voir comme client
