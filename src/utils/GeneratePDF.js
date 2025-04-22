@@ -78,7 +78,7 @@ const generatePDF = async (devis, title = "Devis signé") => {
   doc.save(`Devis-${devis.client || 'client'}.pdf`);
 
   const blob = doc.output('blob');
-  uploadPDFToSupabase(blob, `devis/devis-${devis.id}.pdf`, 'devis', devis.id);
+  uploadPDFToSupabase(blob, `devis/devis-${devis.client}.pdf`, 'devis', devis.lien_client);
 
 };
 
@@ -92,7 +92,7 @@ const generatePDF = async (devis, title = "Devis signé") => {
  * @param {string|number} id - ID de la ligne à mettre à jour
  * @returns {string|null} URL sécurisée ou null en cas d’erreur
  */
-  async function uploadPDFToSupabase(blob, path, table, id) {
+  async function uploadPDFToSupabase(blob, path, table, token) {
   // 1. Upload vers le bucket "documents"
   const { error: uploadError } = await supabase.storage
     .from("documents")
@@ -118,11 +118,10 @@ const generatePDF = async (devis, title = "Devis signé") => {
     return null;
   }
 
-  // 3. Enregistrer ce lien dans ta table (colonne `pdf_url`)
   const { error: updateError } = await supabase
-    .from(table)
-    .update({ pdf_url: signedUrlData.signedUrl })
-    .eq("id", id);
+  .from(table)
+  .update({ pdf_url: signedUrlData.signedUrl })
+  .eq("lien_client", token);
 
   if (updateError) {
     console.error("❌ Erreur enregistrement dans la table :", updateError);
