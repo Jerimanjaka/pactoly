@@ -56,7 +56,6 @@ export default function DevisList() {
 
     const { error } = await supabase.from('factures').insert([
       {
-        user_id: user.id,
         devis_id: devis.id,
         client: devis.client,
         email: devis.email,
