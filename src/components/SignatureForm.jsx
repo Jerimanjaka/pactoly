@@ -37,7 +37,7 @@ export default function SignatureForm({ devisId, nomSignataire, onSigned }) {
         date_signature: dateNow,
         nom_signataire: nomSignataire,
         signature_url: dataUrl,
-        status: signe
+        status: "signe"
 
       })
       .eq("id", devisId);
