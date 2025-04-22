@@ -6,6 +6,7 @@ import generatePDF from '../utils/GeneratePDF'; // ✅ Import de la fonction PDF
 
 export default function SignatureForm({ devisId, nomSignataire, onSigned }) {
   const sigRef = useRef();
+  const { token } = useParams(); // token = uuid_public
   const [signatureUrl, setSignatureUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
@@ -40,7 +41,7 @@ export default function SignatureForm({ devisId, nomSignataire, onSigned }) {
         status: "signe"
 
       })
-      .eq("id", devisId);
+      .eq("lien_client", token);
 
     if (updateError) {
       console.error("Erreur lors de l'enregistrement du devis signé :", updateError);
@@ -53,7 +54,7 @@ export default function SignatureForm({ devisId, nomSignataire, onSigned }) {
     const { data: devis, error: fetchError } = await supabase
       .from("devis")
       .select("*")
-      .eq("id", devisId)
+      .eq("lien_client", token)
       .single();
       
 
@@ -124,7 +125,7 @@ export default function SignatureForm({ devisId, nomSignataire, onSigned }) {
       .update({
         status: "facture"
       })
-      .eq("id", devis.id);
+      .eq("lien_client", token);
 
     if (updateError) {
       console.error("Erreur lors de l'enregistrement du devis signé :", updateError);
