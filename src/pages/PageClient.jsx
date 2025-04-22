@@ -66,11 +66,9 @@ export default function PageClient() {
           </div>
 
           <SignatureForm
-            devisId={devis.id}
             nomSignataire={devis.client}
             onSigned={async () => {
               // Tu peux appeler un email ou reload
-              generatePDF(devis, "Devis signé")
              // window.location.reload(); // refresh après signature
             }}
           />
