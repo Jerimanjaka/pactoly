@@ -100,7 +100,6 @@ export default function SignatureForm({  nomSignataire, onSigned }) {
 
     const { error } = await supabase.from('factures').insert([
       {
-        user_id: user.id,
         devis_id: devis.id,
         client: devis.client,
         email: devis.email,
