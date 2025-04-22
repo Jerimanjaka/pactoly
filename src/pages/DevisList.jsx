@@ -85,7 +85,7 @@ export default function DevisList() {
         date_signature: dateNow,
         nom_signataire: nomSignataire,
         signature_url: dataUrl,
-        status: signe
+        status: "signe"
 
       })
       .eq("id", devis.id);
@@ -188,7 +188,7 @@ export default function DevisList() {
                 Total TTC : {d.total_ttc} €
               </p>
 
-              <div className="mt-2">{getStatutBadge(d.statut)}</div>
+              <div className="mt-2">{getStatutBadge(d.status)}</div>
 
               <div className="flex flex-wrap gap-2 mt-4">
                 <button

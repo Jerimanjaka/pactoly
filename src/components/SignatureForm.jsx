@@ -122,7 +122,7 @@ export default function SignatureForm({ devisId, nomSignataire, onSigned }) {
     const { error: updateError } = await supabase
       .from("devis")
       .update({
-        status: facture
+        status: "facture"
       })
       .eq("id", devisId);
 
