@@ -1,11 +1,11 @@
 import { useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import supabase from "../supabaseClient";
 import { motion } from "framer-motion";
 import generatePDF from '../utils/GeneratePDF'; // ✅ Import de la fonction PDF
 
-export default function SignatureForm({ devisId, nomSignataire, onSigned }) {
+export default function SignatureForm({  nomSignataire, onSigned }) {
   const sigRef = useRef();
   const { token } = useParams(); // token = uuid_public
   const [signatureUrl, setSignatureUrl] = useState(null);
