@@ -124,7 +124,7 @@ export default function SignatureForm({ devisId, nomSignataire, onSigned }) {
       .update({
         status: "facture"
       })
-      .eq("id", devisId);
+      .eq("id", devis.id);
 
     if (updateError) {
       console.error("Erreur lors de l'enregistrement du devis signé :", updateError);
