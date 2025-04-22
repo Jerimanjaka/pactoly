@@ -1,55 +1,135 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+// src/utils/uploadPDFToSupabase.js
 
-// Tu peux laisser ceci vide ou commenter si tu n'as pas de logo
-// const logoBase64 = 'data:image/png;base64,...';
+import supabase from "../supabaseClient";
 
-const generatePDF = (devis,title) => {
+const generatePDF = async (devis, title = "Devis signé") => {
   const doc = new jsPDF();
 
-  // Si un logo est fourni en base64, on peut l'ajouter ici
-  // if (logoBase64) {
-  //   doc.addImage(logoBase64, 'PNG', 15, 10, 30, 30);
-  // }
+  const pageWidth = doc.internal.pageSize.getWidth();
+  let y = 20;
 
-  // Titre du document
+  // Titre
   doc.setFontSize(18);
-  doc.setTextColor(40);
-  doc.text(title, 105, 20, { align: 'center' });
+  doc.setTextColor(33, 37, 41);
+  doc.text(title, pageWidth / 2, y, { align: 'center' });
+  y += 10;
 
-  // Informations client
+  // Infos Client
   doc.setFontSize(12);
-  doc.setTextColor(0);
-  doc.text(`Client : ${devis.client || 'Inconnu'}`, 15, 50);
-  doc.text(`Date : ${devis.date || new Date().toLocaleDateString()}`, 15, 60);
+  doc.setTextColor(44, 62, 80);
+  doc.text(`Client : ${devis.client || 'Inconnu'}`, 15, y += 10);
+  doc.text(`Email : ${devis.email || '-'}`, 15, y += 8);
+  doc.text(`Date de création : ${new Date(devis.date).toLocaleDateString()}`, 15, y += 8);
+  if (devis.est_signe) {
+    doc.text(`✔️ Signé le ${new Date(devis.date_signature).toLocaleDateString()} par ${devis.nom_signataire || devis.client}`, 15, y += 8);
+  }
 
   // Description
-  doc.text('Description :', 15, 80);
+  doc.setFontSize(12);
+  doc.text('Description :', 15, y += 12);
   doc.setFontSize(10);
-  doc.text(devis.description || 'Aucune description fournie.', 15, 90);
+  doc.text(devis.description || 'Aucune description fournie.', 15, y += 8);
 
   // Table des montants
   autoTable(doc, {
-    startY: 110,
+    startY: y + 10,
     head: [['Montant HT (€)', 'TVA (%)', 'Total TTC (€)']],
     body: [[
       (devis.montant_ht || 0).toFixed(2),
       (devis.tva || 0).toFixed(2),
       (devis.total_ttc || 0).toFixed(2),
     ]],
-    styles: { halign: 'center' },
-    headStyles: { fillColor: [22, 160, 133] },
+    styles: {
+      fontSize: 11,
+      halign: 'center',
+    },
+    headStyles: {
+      fillColor: [59, 130, 246], // bleu
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+    },
   });
 
-  // Pied de page
-  const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
-  doc.setFontSize(10);
-  doc.text(`Date : ${new Date().toLocaleDateString()}`, 15, pageHeight - 30);
-  doc.text('Signature :', 15, pageHeight - 20);
-  doc.line(40, pageHeight - 20, 100, pageHeight - 20);
+  // Ajout de la signature si disponible
+  if (devis.signature_url) {
+    const img = new Image();
+    img.src = devis.signature_url;
 
-  // Enregistrer le PDF
+    await new Promise((resolve) => {
+      img.onload = () => {
+        const imgWidth = 80;
+        const imgHeight = 30;
+        const imgY = doc.lastAutoTable.finalY + 20;
+        doc.text("✍️ Signature du client :", 15, imgY);
+        doc.addImage(img, 'PNG', 15, imgY + 2, imgWidth, imgHeight);
+        resolve();
+      };
+    });
+  }
+
+  // Pied de page
+  const footerY = doc.internal.pageSize.getHeight() - 15;
+  doc.setFontSize(9);
+  doc.setTextColor(150);
+  doc.text(`Document généré le ${new Date().toLocaleDateString()}`, 15, footerY);
+
   doc.save(`Devis-${devis.client || 'client'}.pdf`);
+
+  const blob = doc.output('blob');
+  uploadPDFToSupabase(blob, `devis/devis-${devis.id}.pdf`, 'devis', devis.id);
+
 };
+
+
+
+/**
+ * Upload un fichier PDF dans Supabase Storage
+ * @param {Blob} blob - Fichier PDF
+ * @param {string} path - Chemin du fichier ex: 'devis/devis-123.pdf'
+ * @param {string} table - Nom de la table à mettre à jour
+ * @param {string|number} id - ID de la ligne à mettre à jour
+ * @returns {string|null} URL sécurisée ou null en cas d’erreur
+ */
+  async function uploadPDFToSupabase(blob, path, table, id) {
+  // 1. Upload vers le bucket "documents"
+  const { error: uploadError } = await supabase.storage
+    .from("documents")
+    .upload(path, blob, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: "application/pdf",
+    });
+
+  if (uploadError) {
+    console.error("❌ Erreur d'upload :", uploadError);
+    return null;
+  }
+
+  // 2. Générer un lien signé (ex. 30 jours)
+  const { data: signedUrlData, error: urlError } = await supabase
+    .storage
+    .from("documents")
+    .createSignedUrl(path, 60 * 60 * 24 * 30); // 30 jours
+
+  if (urlError || !signedUrlData) {
+    console.error("❌ Erreur URL signée :", urlError);
+    return null;
+  }
+
+  // 3. Enregistrer ce lien dans ta table (colonne `pdf_url`)
+  const { error: updateError } = await supabase
+    .from(table)
+    .update({ pdf_url: signedUrlData.signedUrl })
+    .eq("id", id);
+
+  if (updateError) {
+    console.error("❌ Erreur enregistrement dans la table :", updateError);
+    return null;
+  }
+
+  return signedUrlData.signedUrl;
+}
 
 export default generatePDF;
